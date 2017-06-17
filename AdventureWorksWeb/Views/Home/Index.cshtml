@@ -1,0 +1,94 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@using Kendo.Mvc.UI
+<script src="../Scripts/kendo/2016.3.1118/kendo.aspnetmvc.min.js"></script>
+
+@(Html.Kendo().Grid<AdventureWorksModel.Product.Product_dto>()
+        .Name("grid")
+        .Columns(columns =>
+        {
+            columns.Bound(c => c.ProductID).Hidden();
+            columns.Bound(c => c.Name);
+            columns.Bound(c => c.ProductNumber);
+            columns.Bound(c => c.Color);
+            columns.Bound(c => c.ReorderPoint);
+            columns.Bound(c => c.StandardCost);
+            columns.Bound(c => c.ListPrice);
+            columns.Command(command => { command.Edit(); });
+        })
+        .HtmlAttributes(new { style = "height: 700px;" })
+        .Scrollable()
+        .Groupable()
+        .Sortable()
+        .Filterable()
+        .ToolBar(toolBar => {
+                            toolBar.Template(@<Text>
+                                                    <b class="FloatLeft SearchTopMarginExtra">Search: </b>
+                                                    <input type="search" id="searchbox" class="SearchRight SearchTopMargin" />
+                                                    <a id='createProduct' class='k-button k-button-icontext k-grid-add' href='#'>Add Product</a>
+                                                </Text>);
+        })
+
+    .Editable(editable => editable.Mode(GridEditMode.InLine))
+    .Pageable(pageable => pageable
+    .Refresh(true)
+    .PageSizes(new List<int> { 5, 10, 20, 50 })
+    .ButtonCount(5))
+    .DataSource(dataSource => dataSource
+            .Ajax()
+            .Model(model => model.Id(p => p.ProductID))
+            .Read(read => read.Action("Products_Read", "Home"))
+            .Create(update => update.Action("Products_Add", "Home"))
+            .Update(update => update.Action("Products_Update", "Home"))
+            .PageSize(20)
+            .Events(events => events.Error("error_handler"))
+        )
+)
+
+        <script>
+
+            function error_handler(e) {
+                if (e.errors) {
+                    var message = "Errors:\n";
+                    $.each(e.errors, function (key, value) {
+                        if ('errors' in value) {
+                            $.each(value.errors, function () {
+                                message += this + "\n";
+                            });
+                        }
+                    });
+                    alert(message);
+                }
+            }
+
+            function grid_search() {
+                var val = $('#searchbox').val();
+                $("#grid").data("kendoGrid").dataSource.filter({
+                    logic: "or",
+                    filters: [
+                        {
+                            field: "Name",
+                            operator: "contains",
+                            value: val
+                        },
+                        {
+                            field: "ProductNumber",
+                            operator: "contains",
+                            value: val
+                        },
+                        {
+                            field: "Color",
+                            operator: "contains",
+                            value: val
+                        },
+                    ]
+                });
+            }
+
+            $(document).ready(function () {
+                //Set Events
+                $("#searchbox").keyup(grid_search);
+            });
+        </script>
+
